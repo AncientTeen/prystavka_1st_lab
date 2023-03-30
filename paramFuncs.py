@@ -6,7 +6,7 @@ def average(data):
     avr = 0
     for i in range(len(data)):
         avr += data[i]
-    avr = round((avr / len(data)), 3)
+    avr = round((avr / len(data)), 4)
     return avr
 
 
@@ -17,16 +17,16 @@ def truncatedAverage(data):
     trncAvr = 0
     for i in range(k, len(data) - k):
         trncAvr += data[i]
-    trncAvr = trncAvr / (len(data) - 2 * k)
+    trncAvr = round(trncAvr / (len(data) - 2 * k), 4)
     return trncAvr
 
 
 def medium(data):
     if len(data) % 2 == 0:
-        md = round(((data[int(len(data) / 2)] + data[int((len(data) / 2) - 1)]) / 2), 3)
+        md = round(((data[int(len(data) / 2)] + data[int((len(data) / 2) - 1)]) / 2), 4)
 
     else:
-        md = round((data[len(data) // 2]), 3)
+        md = round((data[len(data) // 2]), 4)
     return md
 
 
@@ -51,7 +51,7 @@ def mediumAbsMiss(data, md):
         arr.append(x)
 
     arr = shellSort(arr, len(arr))
-    mdAbsMss = round(1.483 * medium(arr), 3)
+    mdAbsMss = round(1.483 * medium(arr), 4)
 
     return mdAbsMss
 
@@ -61,7 +61,7 @@ def averageSq(data, avr):
 
     for i in range(len(data)):
         avrSq += (data[i] - avr) ** 2
-    avrSq = round((avrSq / (len(data) - 1)) ** (1 / 2), 3)
+    avrSq = round((avrSq / (len(data) - 1)) ** (1 / 2), 4)
 
     return avrSq
 
@@ -71,7 +71,7 @@ def assymCoef(data, avr):
 
     for i in range(len(data)):
         shftSq += data[i] ** 2 - avr ** 2
-    shftSq = round((shftSq / (len(data))) ** (1 / 2), 3)
+    shftSq = round((shftSq / (len(data))) ** (1 / 2), 4)
 
     sftAssmCf = 0
 
@@ -80,7 +80,7 @@ def assymCoef(data, avr):
 
     sftAssmCf = sftAssmCf / (len(data) * (shftSq ** 3))
 
-    assmCf = round(((((len(data) * (len(data) - 1)) ** (1 / 2)) * sftAssmCf) / (len(data) - 2)), 3)
+    assmCf = round(((((len(data) * (len(data) - 1)) ** (1 / 2)) * sftAssmCf) / (len(data) - 2)), 4)
 
     return assmCf
 
@@ -90,7 +90,7 @@ def excessCoef(data, avr):
 
     for i in range(len(data)):
         shftSq += data[i] ** 2 - avr ** 2
-    shftSq = round((shftSq / (len(data))) ** (1 / 2), 3)
+    shftSq = round((shftSq / (len(data))) ** (1 / 2), 4)
 
     shftExCf = 0
     for i in range(len(data)):
@@ -104,20 +104,22 @@ def excessCoef(data, avr):
 
 
 def contrExcessCoef(exCf):
-    cntrExCf = round((1 / ((abs(exCf)) ** (1 / 2))), 3)
+    cntrExCf = round((1 / ((abs(exCf)) ** (1 / 2))), 4)
     return cntrExCf
 
 
 def pirsonCoef(avrSq, avr):
-    if avr == 0:
+    if avr < 0.0001 and avr > -0.0001:
+        return None
+    elif avr == 0:
         return None
 
-    prsCf = round((avrSq / avr), 3)
+    prsCf = round((avrSq / avr), 4)
     return prsCf
 
 
 def nonParamCoefVar(mdAbsMss, md):
-    return round(mdAbsMss / md, 3)
+    return round(mdAbsMss / md, 4)
 
 
 def confInterAvr(data):
@@ -218,7 +220,7 @@ def confInterContrEx(data):
 
     for i in range(n):
         shftSq += data[i] ** 2 - avr ** 2
-    shftSq = round((shftSq / n) ** (1 / 2), 3)
+    shftSq = round((shftSq / n) ** (1 / 2), 4)
 
     shftExCf = 0
     for i in range(n):
@@ -256,6 +258,8 @@ def confInterVariation(data):
     avr = average(data)
     avrSq = averageSq(data, avr)
     prsCf = pirsonCoef(avrSq, avr)
+    if prsCf is None or prsCf < -10 or prsCf > 10:
+        return None
 
     inf = round(prsCf - t * prsCf * (((1 + 2 * prsCf) / (2 * n)) ** (1 / 2)), 4)
     sup = round(prsCf + t * prsCf * (((1 + 2 * prsCf) / (2 * n)) ** (1 / 2)), 4)
@@ -263,30 +267,42 @@ def confInterVariation(data):
     return inf, sup
 
 
+"""logarithmization"""
+
+
 def logs(data):
     logData = []
 
     if data[0] < 0:
         for i in range(len(data)):
-            x = round((np.log10(data[i] + abs(data[0]) + 0.01)), 3)
+            x = round((np.log10(data[i] + abs(data[0]) + 0.01)), 4)
             logData.append(x)
     else:
         for i in range(len(data)):
-            x = round(np.log10(data[i]), 3)
+            x = round(np.log10(data[i]), 5)
             logData.append(x)
     return logData
 
 
-def standr(data, avr, avrSq):
+"""standartisation"""
+
+
+def standr(data):
     stnData = []
+    avr = average(data)
+    avrSq = averageSq(data, avr)
 
     for i in range(len(data)):
-        x = round(((data[i] - avr) / avrSq), 3)
+        x = round(((data[i] - avr) / avrSq), 4)
         stnData.append(x)
+
     return stnData
 
 
-def removeAnomalian(data):
+"""remove anomalous data"""
+
+
+def removeAnomalous(data):
     n = len(data)
 
     arr = []
@@ -309,74 +325,77 @@ def removeAnomalian(data):
 
 
 def paramFunc(data):
-    avr = average(data)
-    print('Середнє значення: ', avr)
+    n = len(data)
+    print('Характеристика\t\t\t', 'INF\t\t', 'Значення\t\t', 'SUP\t\t', 'SKV')
 
-    trcnAvr = truncatedAverage(data)
-    print('Усічене середнє: ', trcnAvr)
+    avr = average(data)
+    sq = averageSq(data, avr)
+    avrIntr = confInterAvr(data)
+    print('Середнє значення: \t\t\t', avrIntr[0], '\t\t', avr, '\t\t', avrIntr[1], '\t\t',
+          round(sq / (len(data) ** (1 / 2)), 4))
 
     md = medium(data)
-    print('Медіана: ', md)
-
-    mdWlsh = mediumWalsh(data)
-    print('Медіана Уолша: ', mdWlsh)
-
-    mdAbsMss = mediumAbsMiss(data, md)
-    print('Медіана абсолютних відхилень: ', mdAbsMss)
+    print('Медіана: \t\t\t', md, '\t\t', md, '\t\t', md, '\t\t', 0.0000)
 
     avrSq = averageSq(data, avr)
-    print('Сер. квадратичне: ', avrSq)
+    sqIntr = confInterSqAvr(data)
+    print('Сер. квадратичне: \t\t\t', sqIntr[0], '\t\t', avrSq, '\t\t', sqIntr[1], '\t\t',
+          round(sq * (2 / (n - 1)) ** (1 / 4), 4))
 
     assmCf = assymCoef(data, avr)
-    print('Коефіцієнт асиметрії: ', assmCf)
+    assmIntrCof = confInterAssym(data)
+    print('Коефіцієнт асиметрії: \t\t\t', assmIntrCof[0], '\t\t', assmCf, '\t\t', assmIntrCof[1], '\t\t',
+          round((6 * (n - 2) / ((n + 1) * (n + 3))) ** (1 / 2), 4))
 
     exCf = excessCoef(data, avr)
-    print('Коефіцієнт ексцесу: ', exCf)
+    exIntrCof = confInterExcess(data)
+    print('Коефіцієнт ексцесу: \t\t\t', exIntrCof[0], '\t\t', exCf, '\t\t', exIntrCof[1], '\t\t',
+          round((24 * n * (n - 1) ** 2 / ((n - 3) * (n - 2) * (n + 3) * (n + 5))) ** (1 / 2), 4))
+
+    shftSq = 0
+
+    for i in range(n):
+        shftSq += data[i] ** 2 - avr ** 2
+    shftSq = round((shftSq / n) ** (1 / 2), 4)
+
+    shftExCf = 0
+    for i in range(n):
+        shftExCf += (data[i] - avr) ** 4
+    shftExCf = shftExCf / (n * (shftSq ** 4))
 
     cntrExCf = contrExcessCoef(exCf)
-    print('Коефіцієнт контрексцесу: ', cntrExCf)
+    cExIntrCof = confInterContrEx(data)
+    print('Коефіцієнт контрексцесу: \t\t\t', cExIntrCof[0], '\t\t', cntrExCf, '\t\t', cExIntrCof[1], '\t\t',
+          round(((abs(shftExCf) / (29 * n)) ** (1 / 2)) * ((abs(shftExCf ** 2 - 1)) ** (3 / 4)), 4))
 
     prsCf = pirsonCoef(avrSq, avr)
-    print('Коефіцієнт Пірсона: ', prsCf)
+    variatIntrCof = confInterVariation(data)
+    if prsCf is None or prsCf < 10 or prsCf > 10:
+        print('Коефіцієнт Варіації: \t\t\t\t\t', prsCf)
+    else:
+        print('Коефіцієнт Варіації: \t\t\t', variatIntrCof[0], '\t\t', prsCf, '\t\t', variatIntrCof[1], '\t\t',
+              round(prsCf * (((1 + 2 * prsCf) / (2 * n)) ** (1 / 2)), 4))
+
+    trcnAvr = truncatedAverage(data)
+    print('Усічене середнє: \t\t\t\t\t', trcnAvr)
+
+    mdWlsh = mediumWalsh(data)
+    print('Медіана Уолша: \t\t\t\t\t', mdWlsh)
+
+    mdAbsMss = mediumAbsMiss(data, md)
+    print('Медіана абс. відхилень: \t\t\t\t\t', mdAbsMss)
 
     nonParamCfVar = nonParamCoefVar(mdAbsMss, md)
-    print('Непараметричний коефіцієнт варіації: ', nonParamCfVar)
+    print('Непарам. коеф. варіації: \t\t\t\t\t', nonParamCfVar)
 
+    print('-----------------------------')
     print('Квантилі : ')
-    print('0.05: ', round(np.quantile(data, 0.05), 3))
-    print('0.1: ', round(np.quantile(data, 0.1), 3))
-    print('0.25: ', round(np.quantile(data, 0.25), 3))
-    print('0.5: ', round(np.quantile(data, 0.5), 3))
-    print('0.75: ', round(np.quantile(data, 0.75), 3))
-    print('0.9: ', round(np.quantile(data, 0.9), 3))
-    print('0.95: ', round(np.quantile(data, 0.95), 3))
-
-    avrIntr = confInterAvr(data)
-    print('inf середнього: ', avrIntr[0])
-    print('sup середнього: ', avrIntr[1])
-
-    sqIntr = confInterSqAvr(data)
-    print('inf середнього квадратичного: ', sqIntr[0])
-    print('sup середнього квадратичного: ', sqIntr[1])
-
-    assmIntrCof = confInterAssym(data)
-    print('inf асиметрії: ', assmIntrCof[0])
-    print('sup асиметрії: ', assmIntrCof[1])
-
-    exIntrCof = confInterExcess(data)
-    print('inf ексцесу: ', exIntrCof[0])
-    print('sup ексцесу: ', exIntrCof[1])
-
-    cExIntrCof = confInterContrEx(data)
-    print('inf контрексцесу: ', cExIntrCof[0])
-    print('sup контрексцесу: ', cExIntrCof[1])
-
-    variatIntrCof = confInterVariation(data)
-    print('inf варіації : ', variatIntrCof[0])
-    print('sup варіації: ', variatIntrCof[1])
-
-    # anom = removeAnomalian(data)
-    # print('a ', anom[0])
-    # print('b ', anom[1])
+    print('0.05: \t', round(np.quantile(data, 0.05), 3))
+    print('0.1: \t', round(np.quantile(data, 0.1), 3))
+    print('0.25: \t', round(np.quantile(data, 0.25), 3))
+    print('0.5: \t', round(np.quantile(data, 0.5), 3))
+    print('0.75: \t', round(np.quantile(data, 0.75), 3))
+    print('0.9: \t', round(np.quantile(data, 0.9), 3))
+    print('0.95: \t', round(np.quantile(data, 0.95), 3))
 
     return ''

@@ -22,17 +22,12 @@ def create_histogram(v, classes=None):
             b = round((len(v) ** (1 / 3)))
 
     plt.grid(color='grey', linestyle='--', linewidth=0.5)
-    plt.title('Гістограма')
+    plt.xlabel('Варіанти')
+    plt.ylabel('Частоти')
 
-
-
-
+    plt.title('Відносні частоти')
 
     plt.hist(v, bins=b, edgecolor="black", color='blue', weights=np.ones_like(v) / len(v))
-
-
-    # plt.hist(v, density=True, bins=b, edgecolor="black", color='blue')
-    # sns.histplot(v, stat='density', bins=b, edgecolor="black", color='blue')
 
     return plt.gcf()
 
@@ -55,6 +50,10 @@ def create_distribution_function(data, classes=None):
     sns.histplot(data, element="step", fill=False,
                  cumulative=True, stat="density", common_norm=False, bins=b, color='red')
 
+    plt.xlabel('')
+    plt.ylabel('')
+
+    plt.title('Функція розподілу')
 
     return plt.gcf()
 
