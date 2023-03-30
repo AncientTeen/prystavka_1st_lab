@@ -74,11 +74,7 @@ while True:
         window['-OUT1-'].print(paramFunc(nums))
         window['-OUT2-'].print(nums)
 
-    # if event == 'Точкові оцінки':
-    #     window['-OUT1-'].update('')
-    #     window['-OUT2-'].update('')
-    #     window['-OUT1-'].print(paramFunc(nums))
-    #     window['-OUT2-'].print(nums)
+
 
     if event == 'Логарифмувати':
         nums = logs(nums)
@@ -133,10 +129,7 @@ while True:
         window['-OUT1-'].print(paramFunc(nums))
         window['-OUT2-'].print(nums)
 
-    # if event == 'Гістограма':
-    #     if fig_hist is not None:
-    #         delete_figure_agg(fig_hist)
-    #     fig_hist = draw_figure(window['-CANVAS1-'].TKCanvas, create_histogram(nums))
+
     if event == 'Стерти':
         if fig_hist and fig_ecdf is not None:
             delete_figure_agg(fig_hist)
@@ -150,13 +143,7 @@ while True:
         fig_hist = draw_figure(window['-CANVAS1-'].TKCanvas, create_histogram(nums, int(values['-IN1-'])))
         fig_ecdf = draw_figure(window['-CANVAS2-'].TKCanvas, create_distribution_function(nums, int(values['-IN1-'])))
 
-    # if event == 'Функція розподілу':
-    #     if fig_ecdf is not None:
-    #         delete_figure_agg(fig_ecdf)
-    #     fig_ecdf = draw_figure(window['-CANVAS2-'].TKCanvas, create_distribution_function(nums))
-        # if fig_ecdf is not None:
-        #     delete_figure_agg(fig_ecdf)
-        # window['-Output-'].print(create_distribution_function(nums))
+
 
 window.close()
 
