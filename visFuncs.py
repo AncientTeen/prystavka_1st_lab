@@ -58,6 +58,26 @@ def create_distribution_function(data, classes=None):
     return plt.gcf()
 
 
+
+
+def create_probability_grid(data):
+    fig, ax = plt.subplots(figsize=(5, 4))
+
+    n = len(data)
+    y_ax = []
+    for i in range(n):
+        y = np.log(1 / (1 - round(np.quantile(data[i], 0.05), 3)))
+        y_ax.append(y)
+
+    ax.scatter(x=data, y=y_ax, s=7)
+
+    plt.xlabel('')
+    plt.ylabel('')
+
+    plt.title('Імовірнісна сітка')
+
+    return plt.gcf()
+
 def draw_figure(canvas, figure):
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
     figure_canvas_agg.draw()
