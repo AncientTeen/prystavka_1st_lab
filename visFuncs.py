@@ -156,6 +156,8 @@ def density_function(sample, distrb):
     elif distrb == 'Арксінуса':
 
 
+
+
         a = (2 ** 1 / 2) * ((avr_sq - avr**2) ** 1 / 2)
 
         y = 1 / (np.pi * ((a ** 2 - sample ** 2) ** (1 / 2)))
