@@ -1,9 +1,11 @@
+import numpy as np
+
 from paramFuncs import *
 from visFuncs import *
 
 # menu_def = [['Меню', ['Відкрити файл', 'Точкові оцінки', 'Перетворення',
-#                       ['Логарифмувати', 'Стандартизувати', 'Вилучення аномальних значень'], 'Вийти']]]
-sg.theme('DarkTeal1')
+#                       ['Логарифмувати', 'Стандартизувати', 'Вилучення аномальних значень', ], 'Вийти']]]
+sg.theme('DarkBlue7')
 # layout = [[sg.Menu(menu_def)],
 #           [sg.Button('Гістограма'), sg.Button('Стерти'), sg.Push(), sg.Button('Функція розподілу')],
 #           [sg.Text("Кількість класів"), sg.InputText(size=(15, 1), key='-IN1-'),
@@ -25,8 +27,9 @@ l2 = [[sg.Multiline(size=(100, 10), key='-OUT2-', do_not_clear=True, font='Comic
 w1 = [[sg.Canvas(size=(4, 3), key='-CANVAS2-')]]
 w2 = [[sg.Canvas(size=(4, 3), key='-CANVAS3-')]]
 
-menu_def = [['Меню', ['Відкрити файл', 'Точкові оцінки', 'Перетворення',
-                      ['Логарифмувати', 'Стандартизувати', 'Вилучення аномальних значень'], 'Стерти', 'Вийти']]]
+menu_def = [['Меню', ['Відкрити файл', 'Перетворення',
+                      ['Логарифмувати', 'Стандартизувати', 'Вилучення аномальних значень', ],
+                      'Відтворення розподілів', 'Стерти', 'Вийти']]]
 layout = [[sg.Menu(menu_def)],
           [sg.Text("Кількість класів"), sg.InputText(size=(15, 1), key='-IN1-'),
            sg.Button('Ок')],
@@ -50,6 +53,8 @@ window = sg.Window('1st lab_work Prystavka', layout, size=(1200, 800))
 fig_hist = None
 fig_ecdf = None
 fig_grid = None
+
+
 while True:
     event, values = window.read()
     if event in (sg.WIN_CLOSED, 'Вийти'):
@@ -57,13 +62,31 @@ while True:
 
     if event == 'Відкрити файл':
         filename = sg.popup_get_file('file to open', no_window=True)
+        # nums = []
+        # with open(filename) as d:
+        #     num = d.readline()
+        #     while num:
+        #         nums.append(float(num))
+        #         num = d.readline()
+        # d.close()
+
         nums = []
         with open(filename) as d:
             num = d.readline()
             while num:
-                nums.append(float(num))
+                if len(num) == 1:
+                    nums.append(float(num))
+                else:
+                    s_nums = num.split()
+                    for i in range(len(s_nums)):
+                        nums.append(float(s_nums[i]))
+
                 num = d.readline()
         d.close()
+
+
+        # nums = np.fromfile(filename, dtype=float)
+
         nums = shellSort(nums, len(nums))
         create_histogram(nums)
         create_distribution_function(nums)
@@ -150,6 +173,8 @@ while True:
         if fig_hist and fig_ecdf is not None:
             delete_figure_agg(fig_hist)
             delete_figure_agg(fig_ecdf)
+        window['-OUT1-'].update('')
+        window['-OUT2-'].update('')
 
     if event == 'Ок':
         if fig_hist is not None:
@@ -158,5 +183,9 @@ while True:
             delete_figure_agg(fig_ecdf)
         fig_hist = draw_figure(window['-CANVAS1-'].TKCanvas, create_histogram(nums, int(values['-IN1-'])))
         fig_ecdf = draw_figure(window['-CANVAS2-'].TKCanvas, create_distribution_function(nums, int(values['-IN1-'])))
+
+    if event == 'Відтворення розподілів':
+        reproducing_distributions()
+
 
 window.close()
