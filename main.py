@@ -2,9 +2,8 @@ import numpy as np
 
 from paramFuncs import *
 from visFuncs import *
+from reproducing import *
 
-# menu_def = [['Меню', ['Відкрити файл', 'Точкові оцінки', 'Перетворення',
-#                       ['Логарифмувати', 'Стандартизувати', 'Вилучення аномальних значень', ], 'Вийти']]]
 sg.theme('DarkBlue7')
 # layout = [[sg.Menu(menu_def)],
 #           [sg.Button('Гістограма'), sg.Button('Стерти'), sg.Push(), sg.Button('Функція розподілу')],
@@ -54,7 +53,6 @@ fig_hist = None
 fig_ecdf = None
 fig_grid = None
 
-
 while True:
     event, values = window.read()
     if event in (sg.WIN_CLOSED, 'Вийти'):
@@ -62,13 +60,6 @@ while True:
 
     if event == 'Відкрити файл':
         filename = sg.popup_get_file('file to open', no_window=True)
-        # nums = []
-        # with open(filename) as d:
-        #     num = d.readline()
-        #     while num:
-        #         nums.append(float(num))
-        #         num = d.readline()
-        # d.close()
 
         nums = []
         with open(filename) as d:
@@ -84,8 +75,6 @@ while True:
                 num = d.readline()
         d.close()
 
-
-        # nums = np.fromfile(filename, dtype=float)
 
         nums = shellSort(nums, len(nums))
         create_histogram(nums)
@@ -186,6 +175,5 @@ while True:
 
     if event == 'Відтворення розподілів':
         reproducing_distributions()
-
 
 window.close()
