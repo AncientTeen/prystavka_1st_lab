@@ -12,12 +12,13 @@ from scipy.stats import norm
 from statsmodels.distributions.empirical_distribution import ECDF
 from scipy.stats import arcsine
 from paramFuncs import *
+import math
 from visFuncs import *
 from funcs import *
 
 
 def reproducing_distributions():
-    menu_def2 = [['Меню', ['Відкрити файл']]]
+    menu_def2 = [['Меню', ['Відкрити файл', 'Вийти']]]
     layout2 = [[sg.Menu(menu_def2)],
                [sg.Text('Розподіл'), sg.Combo(['Експоненційний', 'Нормальний', 'Рівномірний', 'Вейбула', 'Арксінуса'],
                                               font=('Arial Bold', 14), enable_events=True, readonly=False,
@@ -37,6 +38,9 @@ def reproducing_distributions():
     while True:
 
         event2, values2 = win2.read()
+        if event2 in (sg.WIN_CLOSED, 'Вийти'):
+            break
+
         if event2 == 'Відкрити файл':
             filename = sg.popup_get_file('file to open', no_window=True)
 
@@ -130,9 +134,9 @@ def density_function(sample, distrb):
 
     elif distrb == 'Арксінуса':
 
-        a = (2 ** 1 / 2) * ((avr_sq - avr ** 2) ** 1 / 2)
-
-        y = 1 / (np.pi * ((a ** 2 - sample ** 2) ** (1 / 2)))
+        a = np.sqrt(2) * np.sqrt(avr_sq - avr ** 2)
+        #
+        y = 1 / (np.pi * (np.sqrt(a ** 2 - sample ** 2)))
 
     elif distrb == 'Нормальний':
         m = avr
@@ -221,7 +225,7 @@ def distribut_func(sample, distrb):
     avr = average(sample)
     avr_sq = average_sq(sample)
 
-    conf_inter = 1.36 / n
+    conf_inter = 1.36 / np.sqrt(n)
 
     # plt.ylim(0, 1)
     if distrb == 'Експоненційний':
@@ -234,7 +238,7 @@ def distribut_func(sample, distrb):
 
     elif distrb == 'Арксінуса':
 
-        a = (2 ** (1 / 2)) * ((avr_sq - avr ** 2) ** (1 / 2))
+        a = np.sqrt(2) * np.sqrt(avr_sq - avr ** 2)
 
         y = 1 / 2 + np.arcsin((sample / a)) / np.pi
         y_up = 1 / 2 + np.arcsin((sample / a)) / np.pi + conf_inter
@@ -244,29 +248,42 @@ def distribut_func(sample, distrb):
     elif distrb == 'Нормальний':
         m = avr
         sq = (n * ((avr_sq - avr ** 2) ** (1 / 2))) / (n - 1)
-        u = (sample - m) / sq
-        t = 1 / (1 + 0.2316419 * u)
+        # u = (sample - m) / sq
+        # t = 1 / (1 + 0.2316419 * u)
+        #
+        # # i = 0
+        # # y = []
+        # # while i < n:
+        # #     if u[i] < 0:
+        # #         y.append(1 - (1 - (np.exp(-(abs(u[i]) ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
+        # #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (10 ** (-8))))
+        # #     else:
+        # #         y.append(1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
+        # #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (10 ** (-8)))
+        # #     i += 1
+        #
+        # y = 1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
+        #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (10 ** (-8))
+        #
+        # y_up = 1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
+        #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (
+        #                10 ** (-8)) + conf_inter
+        #
+        # y_low = 1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
+        #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (
+        #                 10 ** (-8)) - conf_inter
 
-        # i = 0
-        # y = []
-        # while i < n:
-        #     if u[i] < 0:
-        #         y.append(1 - (1 - (np.exp(-(abs(u[i]) ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
-        #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (10 ** (-8))))
-        #     else:
-        #         y.append(1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
-        #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (10 ** (-8)))
-        #     i += 1
 
-        y = 1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
-            -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (10 ** (-8))
+        h = (sample[-1] - sample[0]) / n
+        delt_x = [(sample[0] + i * h) for i in range(n + 1)]
+        y = [0 for i in range(n)]
+        for i in range(n):
+            y[i] = (np.exp(-((delt_x[i] - m) ** 2) / (2 * (sq ** 2)))) / (sq * ((2 * np.pi) ** (1 / 2))) * h
 
-        y_up = 1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
-            -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (10 ** (-8)) + conf_inter
 
-        y_low = 1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
-            -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (
-                           10 ** (-8)) - conf_inter
+
+
+
 
 
     elif distrb == 'Вейбула':
@@ -335,12 +352,10 @@ def distribut_func(sample, distrb):
             y_up[k] = y[k] + conf_inter
             y_low[k] = y[k] - conf_inter
 
-
-
-    plt.plot(sample, y)
-    plt.plot(sample, y_up)
-    plt.plot(sample, y_low)
-
+    plt.plot(sample, y, label='Теоретична функція розподілу')
+    plt.plot(sample, y_up, label='Верхня межа')
+    plt.plot(sample, y_low, label='Нижня межа')
+    plt.legend()
     # ax.scatter(sample, y)
 
     return plt.gcf()
@@ -365,6 +380,7 @@ def reproducing_params(sample, distrb):
         res += 'A: 2\n'
         res += 'E: 6\n'
 
+        res += '\nТочність оцінок:\n'
         lambd_disp = (lambd ** 2) / n
         res += 'D(\u03BB): ' + str(round(lambd_disp, 4)) + '\n'
 
@@ -386,6 +402,7 @@ def reproducing_params(sample, distrb):
         res += 'E: 0\n'
         res += 'E\u0302: 3\n'
 
+        res += '\nТочність оцінок:\n'
         disp_m = (sq ** 2) / n
         res += 'D(m\u0302:)' + str(round(disp_m, 4)) + '\n'
 
@@ -400,7 +417,7 @@ def reproducing_params(sample, distrb):
 
     elif distrb == 'Арксінуса':
         res += 'Параметри розподілу Арксінуса: \n'
-        a = (2 ** 1 / 2) * ((avr_sq - avr ** 2) ** 1 / 2)
+        a = np.sqrt(2) * np.sqrt(avr_sq - avr ** 2)
         res += 'a: ' + str(round(a, 4)) + '\n'
 
         res += 'E(\u03BE): 0\n'
@@ -411,6 +428,7 @@ def reproducing_params(sample, distrb):
         res += 'A: 0\n'
         res += 'E: -1.5\n'
 
+        res += '\nТочність оцінок:\n'
         disp_a = (a ** 4) / (8 * n)
         res += 'D(a): ' + str(round(disp_a, 4)) + '\n'
 
@@ -430,6 +448,8 @@ def reproducing_params(sample, distrb):
         res += 'a: ' + str(round(a, 4)) + '\n'
         res += 'b: ' + str(round(b, 4)) + '\n'
 
+        res += '\nТочність оцінок:\n'
+
         disp_avr = ((b - a) ** 2) / (12 * n)
         res += 'D(x\u0302): ' + str(round(disp_avr, 4)) + '\n'
 
@@ -440,5 +460,3 @@ def reproducing_params(sample, distrb):
         res += 'cov(x\u0302, x^2\u0302): ' + str(round(cov, 4)) + '\n'
 
         return res
-
-

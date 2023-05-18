@@ -9,12 +9,14 @@ def average(data):
     avr = round((avr / len(data)), 4)
     return avr
 
+
 def average_sq(data):
     avr_sq = 0
     for i in range(len(data)):
-        avr_sq += data[i]**2
+        avr_sq += data[i] ** 2
     avr_sq = round((avr_sq / len(data)), 4)
     return avr_sq
+
 
 def truncatedAverage(data):
     alf = 0.3
@@ -405,3 +407,5 @@ def paramFunc(data):
     print('0.95: \t', round(np.quantile(data, 0.95), 3))
 
     return ''
+
+

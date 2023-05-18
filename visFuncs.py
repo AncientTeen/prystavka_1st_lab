@@ -1,16 +1,3 @@
-import PySimpleGUI as sg
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import numpy as np
-import plotly.express as px
-import seaborn as sns
-from scipy import stats
-from funcs import *
-from scipy.stats import norm
-from statsmodels.distributions.empirical_distribution import ECDF
-from scipy.stats import arcsine
 from paramFuncs import *
 
 
@@ -22,8 +9,12 @@ def create_histogram(v, classes=None):
     else:
         if len(v) < 100:
             b = round((len(v) ** (1 / 2)))
+            if b % 2 == 0:
+                b -= 1
         else:
             b = round((len(v) ** (1 / 3)))
+            if b % 2 == 0:
+                b -= 1
 
     plt.grid(color='grey', linestyle='--', linewidth=0.5)
     plt.xlabel('Варіанти')
@@ -66,38 +57,6 @@ def create_distribution_function(data, classes=None):
                  cumulative=True, stat="density", common_norm=False, bins=b, color='red')
 
     plt.xlim(data[0], data[-1])
-    # plt.ylim(0, 1)
-
-    """thoughts about distribution function"""
-    # avr = average(data)
-    # sq = averageSq(data, avr)
-    #
-    # x = np.sort(data)
-    # y1 = (np.arange(len(x)) / float(len(x)))
-    # plt.plot(x, y1, color='red')
-    #
-    # y2 = ((np.arange(len(x)) / float(len(x)))) + t * sq
-    # plt.plot(x, y2, color='green', linestyle='--')
-    #
-    # y3 = ((np.arange(len(x)) / float(len(x)))) - t * sq
-    # plt.plot(x, y3, color='black', linestyle='--')
-
-    # y_vals1 = np.array([exp_pdf(avr, x) for x in data])
-    #
-    # ax.plot(data, y_vals1)
-
-    # cdf = norm_rv.cdf()
-
-    # ecdf = ECDF(data)
-
-    # sns.lineplot(x=data, y=s_y, color='g')
-    # sns.lineplot(x=data, y=s_y + t * sq, color='r')
-    # sns.lineplot(x=data, y=s_y - t * sq, color='r')
-
-    # plt.step(ecdf.x, ecdf.y, 'g')
-
-    # sns.lineplot(x=data, y=s_y, color='green')
-    # sns.kdeplot(data=data, cumulative=True, color='green')
 
     plt.xlabel('')
     plt.ylabel('')
@@ -105,10 +64,6 @@ def create_distribution_function(data, classes=None):
     plt.title('Функція розподілу')
 
     return plt.gcf()
-
-
-# def exp_pdf(lam, x):
-#     return 1 - np.exp(-lam * x)
 
 
 def create_probability_grid(data):
@@ -141,9 +96,6 @@ def create_probability_grid(data):
     return plt.gcf()
 
 
-
-
-
 def draw_figure(canvas, figure):
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
     figure_canvas_agg.draw()
@@ -154,5 +106,3 @@ def draw_figure(canvas, figure):
 def delete_figure_agg(figure_agg):
     figure_agg.get_tk_widget().forget()
     plt.close('all')
-
-
