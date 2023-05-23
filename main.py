@@ -5,7 +5,6 @@ from tkinter.ttk import Notebook
 
 from paramFuncs import *
 from visFuncs import *
-from reproducing import *
 
 #
 # """thoughts about tabs"""
@@ -191,11 +190,38 @@ def donothing():
 
 
 def openFile():
-    root.filename = fd.askopenfilename(initialdir="/", title="Select file", filetypes=(('text files', '*.txt'),
-                                                                                       ('All files', '*.*')))
+    # root.filename = fd.askopenfilename(initialdir="/", title="Select file", filetypes=(('text files', '*.txt'),
+    #                                                                                    ('All files', '*.*')))
+    root.filename = fd.askopenfilename(initialdir="/", title="Select file", filetypes=[('All Files', '*.*'),
+                                                                                       ('Python Files', '*.py'),
+                                                                                       ('Text Document', '*.txt'),
+                                                                                       ('CSV files', "*.csv")])
+
+    print(root.filename.split('.')[1])
+
     global array
-    array = np.loadtxt(root.filename, delimiter=",", dtype='float')
-    array = shellSort(array, len(array))
+    if root.filename.split('.')[1] == 'txt':
+        array = np.loadtxt(root.filename, delimiter=",", dtype='float')
+        array = shellSort(array, len(array))
+    elif root.filename.split('.')[1] == 'DAT':
+        array = np.loadtxt(root.filename, dtype='float')
+        print(array)
+        arr_buff = []
+        for i in range(len(array)):
+            for j in range(len(array[i])):
+                arr_buff.append(array[i][j])
+        array = arr_buff
+        array = np.asarray(array)
+        array = shellSort(array, len(array))
+    elif root.filename.split('.')[1] == 'csv':
+        array = np.loadtxt(root.filename, dtype='float')
+        arr_buff = []
+        for i in range(len(array)):
+            for j in range(len(array[i])):
+                arr_buff.append(array[i][j])
+        array = arr_buff
+
+        array = shellSort(array, len(array))
 
     createHist(array)
     create_distribution_function(array)
@@ -270,74 +296,70 @@ def createHist(arr, distrb=None, classes=None):
     plt.hist(arr, bins=b, edgecolor="black", color='blue', weights=np.ones_like(arr) / len(arr))
 
     """model reproducing"""
+    # if l_arr is not None:
+    #     arr = l_arr
+    #
+    # elif anom_arr is not None:
+    #     arr = anom_arr
+    #
+    # elif s_arr is not None:
+    #     arr = s_arr
+
+
+
 
     n = len(arr)
     avr = average(arr)
     avr_sq = average_sq(arr)
 
     if distrb == 'Експоненціальний':
-        if l_arr is not None:
-            arr = l_arr
-
-        elif s_arr is not None:
-            arr = s_arr
-
-        elif anom_arr is not None:
-            arr = anom_arr
+        a_n = np.histogram(arr, bins=b)
+        nm = max(a_n[0]) / n
+        print(nm)
 
         lambd = 1 / avr
-        y = lambd * np.exp(-lambd * arr)
+
+        y = (lambd * np.exp(-lambd * arr))
+
+        y = y * (nm / max(y))
+
+        print(y)
 
         plt.plot(arr, y)
 
 
     elif distrb == 'Арксінуса':
-        if l_arr is not None:
-            arr = l_arr
+        a_n = np.histogram(arr, bins=b)
+        nm = max(a_n[0]) / n
 
-        elif s_arr is not None:
-            arr = s_arr
+        a = np.sqrt(2) * np.sqrt(avr_sq - (avr ** 2))
 
-        elif anom_arr is not None:
-            arr = anom_arr
-
-        a = np.sqrt(2) * np.sqrt(avr_sq - avr ** 2)
-        #
         y = 1 / (np.pi * (np.sqrt(a ** 2 - arr ** 2)))
+
+        y = y * (nm / max(y))
 
         plt.plot(arr, y)
 
 
     elif distrb == 'Нормальний':
-        if l_arr is not None:
-            arr = l_arr
-
-        elif s_arr is not None:
-            arr = s_arr
-
-        elif anom_arr is not None:
-            arr = anom_arr
-
+        a = np.histogram(arr, bins=b)
+        nm = max(a[0]) / n
+        print(nm)
         m = avr
-        sq = (n * ((avr_sq - avr ** 2) ** (1 / 2))) / (n - 1)
+        sq = (n / (n - 1)) * (np.sqrt(avr_sq - avr ** 2))
 
-        y = (np.exp(-((arr - m) ** 2) / (2 * (sq ** 2)))) / (sq * ((2 * np.pi) ** (1 / 2)))
+        y = (np.exp(-((arr - m) ** 2) / (2 * (sq ** 2)))) / (sq * np.sqrt(2 * np.pi))
+
+        y = y * (nm / max(y))
 
         plt.plot(arr, y)
 
 
 
     elif distrb == 'Вейбула':
-        if l_arr is not None:
-            arr = l_arr
-
-        elif s_arr is not None:
-            arr = s_arr
-
-        elif anom_arr is not None:
-            arr = anom_arr
-
-        ecdf = ECDF(arr)
+        a_n = np.histogram(arr, bins=b)
+        nm = max(a_n[0]) / n
+        s_y = np.arange(1, n + 1) / n
 
         a11 = n - 1
 
@@ -353,18 +375,13 @@ def createHist(arr, distrb=None, classes=None):
 
         b1 = 0
 
-        for i in range(1, n - 1):
-            # b1 += np.log(np.log(1 / (1 - (i / n))))
-            b1 += np.log(np.log(1 / (1 - (ecdf.y[i] / n))))
+        for i in range(n - 1):
+            b1 += np.log(np.log(1 / (1 - s_y[i])))
 
         b2 = 0
 
         for i in range(n - 1):
-            j = i
-            # b2 += np.log(sample[i]) * np.log(np.log(1 / (1 - (i / n))))
-            if i == (n - 1):
-                b2 += np.log(arr[i]) * np.log(np.log(1 / (1 - (ecdf.y[i] / n))))
-            b2 += np.log(arr[i]) * np.log(np.log(1 / (1 - (ecdf.y[j + 1] / n))))
+            b2 += np.log(arr[i]) * np.log(np.log(1 / (1 - s_y[i])))
 
         a_matr = [[a11, a12],
 
@@ -380,7 +397,9 @@ def createHist(arr, distrb=None, classes=None):
 
         beta = cof_matr[1]
 
-        y = (beta * (arr ** (beta - 1)) * np.exp(-(arr ** beta) / alf)) / alf
+        y = (beta / alf) * (arr ** (beta - 1)) * np.exp(-(arr ** beta) / alf)
+
+        y = y * (nm / max(y))
 
         plt.plot(arr, y)
 
@@ -388,14 +407,8 @@ def createHist(arr, distrb=None, classes=None):
 
 
     elif distrb == 'Рівномірний':
-        if l_arr is not None:
-            arr = l_arr
-
-        elif s_arr is not None:
-            arr = s_arr
-
-        elif anom_arr is not None:
-            arr = anom_arr
+        a_n = np.histogram(arr, bins=b)
+        nm = sum(a_n[0]) / (n * b)
 
         a = avr - ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
         b = avr + ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
@@ -404,11 +417,14 @@ def createHist(arr, distrb=None, classes=None):
 
         i = 0
         while i < n:
-            if arr[i] >= a and arr[i] < b:
-                y[i] = 1 / (b - a)
+            y[i] = 1 / (b - a)
             i += 1
-
+        y = np.asarray(y)
+        print(y)
+        y = y * (nm / max(y))
         plt.plot(arr, y)
+
+    # elif distrb == 'Універсальний':
 
     hist = FigureCanvasTkAgg(fig, master=root)
     hist.get_tk_widget().grid(row=0, column=0)
@@ -488,74 +504,55 @@ def create_distribution_function(arr, distrb=None, classes=None):
     elif distrb == 'Нормальний':
 
         m = avr
-        sq = (n * ((avr_sq - avr ** 2) ** (1 / 2))) / (n - 1)
-        # u = (sample - m) / sq
-        # t = 1 / (1 + 0.2316419 * u)
-        #
-        # # i = 0
-        # # y = []
-        # # while i < n:
-        # #     if u[i] < 0:
-        # #         y.append(1 - (1 - (np.exp(-(abs(u[i]) ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
-        # #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (10 ** (-8))))
-        # #     else:
-        # #         y.append(1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
-        # #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (10 ** (-8)))
-        # #     i += 1
-        #
-        # y = 1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
-        #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (10 ** (-8))
-        #
-        # y_up = 1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
-        #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (
-        #                10 ** (-8)) + conf_inter
-        #
-        # y_low = 1 - (np.exp(-(u ** 2) / 2) * (0.31938153 * t + (-0.356563782) * (t ** 2) + 1.781477937 * (t ** 3) + (
-        #     -1.821255978) * (t ** 4) + 1.330274429 * (t ** 5))) / ((2 * np.pi) ** (1 / 2)) + 7.8 * (
-        #                 10 ** (-8)) - conf_inter
+        sq = (n / (n - 1)) * (np.sqrt(avr_sq - avr ** 2))
 
-        h = (arr[-1] - arr[0]) / n
-        delt_x = [(arr[0] + i * h) for i in range(n + 1)]
         y = [0 for i in range(n)]
+        y_up = [0 for i in range(n)]
+        y_low = [0 for i in range(n)]
+
         for i in range(n):
-            y[i] = (np.exp(-((delt_x[i] - m) ** 2) / (2 * (sq ** 2)))) / (sq * ((2 * np.pi) ** (1 / 2))) * h
+            y[i] = 0.5 * (1 + erf(((arr[i] - m) / (np.sqrt(2) * sq))))
+            y_up[i] = 0.5 * (1 + erf(((arr[i] - m) / (np.sqrt(2) * sq)))) + conf_inter
+            y_low[i] = 0.5 * (1 + erf(((arr[i] - m) / (np.sqrt(2) * sq)))) - conf_inter
+
+        print(y)
 
         plt.plot(arr, y, label='Теоретична функція розподілу')
-        # plt.plot(arr, y_up, label='Верхня межа')
-        # plt.plot(arr, y_low, label='Нижня межа')
+        plt.plot(arr, y_up, label='Верхня межа')
+        plt.plot(arr, y_low, label='Нижня межа')
 
         plt.legend()
 
-
     elif distrb == 'Вейбула':
 
-        ecdf = ECDF(arr)
+        a_n = np.histogram(arr, bins=b)
+        nm = max(a_n[0]) / n
+        s_y = np.arange(1, n + 1) / n
 
         a11 = n - 1
+
         a12 = 0
+
         for i in range(n - 1):
             a12 += np.log(arr[i])
 
         a22 = 0
+
         for i in range(n - 1):
             a22 += np.log(arr[i]) ** 2
 
         b1 = 0
 
-        for i in range(1, n - 1):
-            # b1 += np.log(np.log(1 / (1 - (i / n))))
-            b1 += np.log(np.log(1 / (1 - (ecdf.y[i] / n))))
+        for i in range(n - 1):
+            b1 += np.log(np.log(1 / (1 - s_y[i])))
 
         b2 = 0
 
         for i in range(n - 1):
-            j = i
-            # b2 += np.log(sample[i]) * np.log(np.log(1 / (1 - (i / n))))
-            if i == (n - 1):
-                b2 += np.log(arr[i]) * np.log(np.log(1 / (1 - (ecdf.y[i] / n))))
-            b2 += np.log(arr[i]) * np.log(np.log(1 / (1 - (ecdf.y[j + 1] / n))))
+            b2 += np.log(arr[i]) * np.log(np.log(1 / (1 - s_y[i])))
 
         a_matr = [[a11, a12],
+
                   [a12, a22]]
 
         b_matr = [b1, b2]
@@ -565,6 +562,7 @@ def create_distribution_function(arr, distrb=None, classes=None):
         cof_matr = np.dot(a_matr_inv, b_matr)
 
         alf = np.exp(-cof_matr[0])
+
         beta = cof_matr[1]
 
         y = 1 - np.exp(-(arr ** beta) / alf)
@@ -578,7 +576,6 @@ def create_distribution_function(arr, distrb=None, classes=None):
 
         # np.log(1 / (1 - (i / len(data))))
 
-
     elif distrb == 'Рівномірний':
 
         a = avr - ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
@@ -587,6 +584,7 @@ def create_distribution_function(arr, distrb=None, classes=None):
         y = [0 for i in range(n)]
 
         i = 0
+
         while i < n:
             if arr[i] >= a and arr[i] < b:
                 y[i] = (arr[i] - a) / (b - a)
@@ -605,26 +603,15 @@ def create_distribution_function(arr, distrb=None, classes=None):
 
         plt.legend()
 
-    plt.xlim(arr[0], arr[-1])
-
+    plt.title('Функція розподілу')
     plt.xlabel('')
     plt.ylabel('')
-
-    plt.title('Функція розподілу')
-
     distr_func = FigureCanvasTkAgg(fig, master=root)
     distr_func.get_tk_widget().grid(row=0, column=2, columnspan=2)
     toolbar = NavigationToolbar2Tk(distr_func, root, pack_toolbar=False)
     toolbar.update()
-    # toolbar.grid(row=1, column=3, columnspan=2)
-    toolbar.grid(row=1, column=3)
+    toolbar.grid(row=1, column=2, columnspan=2)
 
-
-#     distr_func = FigureCanvasTkAgg(fig, master=root)
-#     distr_func.get_tk_widget().grid(row=0, column=2, columnspan=2)
-#     toolbar = NavigationToolbar2Tk(distr_func, root, pack_toolbar=False)
-#     toolbar.update()
-#     toolbar.grid(row=1, column=2, columnspan=2)
 
 def outputData(arr):
     tabControl = Notebook(root)
@@ -754,6 +741,194 @@ def arcsin():
     create_distribution_function(array, "Арксінуса")
 
 
+def univers():
+    n = len(array)
+    if n < 100:
+        b = round((n ** (1 / 2)))
+    else:
+        b = round((n ** (1 / 3)))
+
+    avr = average(array)
+    avr_sq = average_sq(array)
+    conf_inter = 1.36 / np.sqrt(n)
+    a_n = np.histogram(array, bins=b)
+    nm = max(a_n[0]) / n
+    s_y = np.arange(1, n + 1) / n
+
+    """exponential distribution check"""
+    lambd = 1 / avr
+    y = 1 - np.exp(-lambd * array)
+
+    dPlus = 0
+    for i in range(n):
+        if dPlus < abs(s_y[i] - y[i]):
+            dPlus = abs(s_y[i] - y[i])
+
+    dMinus = 0
+    for i in range(1, n):
+        if dMinus < abs(s_y[i] - y[i - 1]):
+            dMinus = abs(s_y[i] - y[i - 1])
+
+    zet = np.sqrt(n) * max(dPlus, dMinus)
+
+    pZet_exp = 1 - K_zet(zet, n)
+
+    """arcsine distribution check"""
+
+    a = np.sqrt(2) * np.sqrt(avr_sq - avr ** 2)
+
+    y = 1 / 2 + np.arcsin((array / a)) / np.pi
+
+    dPlus = 0
+    for i in range(n):
+        if dPlus < abs(s_y[i] - y[i]):
+            dPlus = abs(s_y[i] - y[i])
+
+    dMinus = 0
+    for i in range(1, n):
+        if dMinus < abs(s_y[i] - y[i - 1]):
+            dMinus = abs(s_y[i] - y[i - 1])
+
+    zet = np.sqrt(n) * max(dPlus, dMinus)
+
+    pZet_arc = 1 - K_zet(zet, n)
+
+    """normal distribution check"""
+    m = avr
+    sq = (n / (n - 1)) * (np.sqrt(avr_sq - avr ** 2))
+
+    y = [0 for i in range(n)]
+    for i in range(n):
+        y[i] = 0.5 * (1 + erf(((array[i] - m) / (np.sqrt(2) * sq))))
+
+    dPlus = 0
+    for i in range(n):
+        if dPlus < abs(s_y[i] - y[i]):
+            dPlus = abs(s_y[i] - y[i])
+
+    dMinus = 0
+    for i in range(1, n):
+        if dMinus < abs(s_y[i] - y[i - 1]):
+            dMinus = abs(s_y[i] - y[i - 1])
+
+    zet = np.sqrt(n) * max(dPlus, dMinus)
+
+    pZet_norm = 1 - K_zet(zet, n)
+
+    """uniform distribution check"""
+    a = avr - ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
+    b = avr + ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
+
+    y = [0 for i in range(n)]
+
+    i = 0
+
+    while i < n:
+        if array[i] >= a and array[i] < b:
+            y[i] = (array[i] - a) / (b - a)
+        elif array[i] >= b:
+            y[i] = 1
+        i += 1
+
+    dPlus = 0
+    for i in range(n):
+        if dPlus < abs(s_y[i] - y[i]):
+            dPlus = abs(s_y[i] - y[i])
+
+    dMinus = 0
+    for i in range(1, n):
+        if dMinus < abs(s_y[i] - y[i - 1]):
+            dMinus = abs(s_y[i] - y[i - 1])
+
+    zet = np.sqrt(n) * max(dPlus, dMinus)
+
+    pZet_uni = 1 - K_zet(zet, n)
+
+    """weibull distribution check"""
+    a11 = n - 1
+
+    a12 = 0
+
+    for i in range(n - 1):
+        a12 += np.log(array[i])
+
+    a22 = 0
+
+    for i in range(n - 1):
+        a22 += np.log(array[i]) ** 2
+
+    b1 = 0
+
+    for i in range(n - 1):
+        b1 += np.log(np.log(1 / (1 - s_y[i])))
+
+    b2 = 0
+
+    for i in range(n - 1):
+        b2 += np.log(array[i]) * np.log(np.log(1 / (1 - s_y[i])))
+
+    a_matr = [[a11, a12],
+
+              [a12, a22]]
+
+    b_matr = [b1, b2]
+
+    a_matr_inv = funcReversMatr(a_matr, 2)
+
+    cof_matr = np.dot(a_matr_inv, b_matr)
+
+    alf = np.exp(-cof_matr[0])
+
+    beta = cof_matr[1]
+
+    y = 1 - np.exp(-(array ** beta) / alf)
+
+    dPlus = 0
+    for i in range(n):
+        if dPlus < abs(s_y[i] - y[i]):
+            dPlus = abs(s_y[i] - y[i])
+
+    dMinus = 0
+    for i in range(1, n):
+        if dMinus < abs(s_y[i] - y[i - 1]):
+            dMinus = abs(s_y[i] - y[i - 1])
+
+    zet = np.sqrt(n) * max(dPlus, dMinus)
+
+    pZet_weib = 1 - K_zet(zet, n)
+
+
+    print(pZet_weib, ' weib')
+    print(pZet_arc, ' arc')
+    print(pZet_norm, ' norm')
+    print(pZet_uni, ' uni')
+    print(pZet_exp, ' exp')
+
+    max_distr = max(pZet_weib, pZet_arc, pZet_norm, pZet_uni, pZet_exp)
+
+    if max_distr == pZet_weib:
+        createHist(array, "Вейбула")
+        create_distribution_function(array, "Вейбула")
+
+    elif max_distr == pZet_arc:
+        createHist(array, "Арксінуса")
+        create_distribution_function(array, "Арксінуса")
+
+    elif max_distr == pZet_norm:
+        createHist(array, "Нормальний")
+        create_distribution_function(array, "Нормальний")
+
+    elif max_distr == pZet_uni:
+        createHist(array, "Рівномірний")
+        create_distribution_function(array, "Рівномірний")
+
+    elif max_distr == pZet_exp:
+        createHist(array, "Експоненціальний")
+        create_distribution_function(array, "Експоненціальний")
+
+
+
+
 root = Tk()
 root.geometry("1400x800")
 
@@ -776,6 +951,7 @@ models_reproduction.add_command(label="Експоненціальний", comman
 models_reproduction.add_command(label="Рівномірний", command=ravn)
 models_reproduction.add_command(label="Вейбула", command=veib)
 models_reproduction.add_command(label="Арксінуса", command=arcsin)
+models_reproduction.add_command(label="Універсальний", command=univers)
 
 menubar.add_cascade(label="Меню", menu=filemenu)
 filemenu.add_cascade(label="Перетворення", menu=transformation_menu)
