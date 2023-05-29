@@ -166,8 +166,64 @@ def K_zet(zet, n):
         res += ((-1) ** i) * np.exp(-2 * (i ** 2) * (zet ** 2)) * (
                 1 - ((2 * i ** 2 * zet) / (3 * np.sqrt(n))) - (1 / (18 * n)) * (
             (f1(i) - 4 * (f1(i) + 3) * i ** 2 * zet ** 2 + 8 * i ** 4 * zet ** 4)) + (
-                       (i ** 2 * zet) / (27 * np.sqrt(n ** 3))) * (
-                       (f2(i) ** 2 / 5) - ((4 * (f2(i) + 45) * i ** 2 * zet ** 2) / 15) + 8 * i ** 4 * zet ** 4))
+                        (i ** 2 * zet) / (27 * np.sqrt(n ** 3))) * (
+                        (f2(i) ** 2 / 5) - ((4 * (f2(i) + 45) * i ** 2 * zet ** 2) / 15) + 8 * i ** 4 * zet ** 4))
 
     res = 1 + 2 * res
+    return res
+
+
+def exp_distr(l, x):
+    return 1 - np.exp(-l * x)
+
+
+def exp_up(l, x):
+    n = len(x)
+    return 1 - np.exp(-l * x) + np.sqrt((l * np.exp(-l * x)) ** 2 * ((x ** 2 * np.exp(-2 * l * x) * l ** 2) / n)) * 1.96
+
+
+def exp_low(l, x):
+    n = len(x)
+    return 1 - np.exp(-l * x) - np.sqrt((l * np.exp(-l * x)) ** 2 * ((x ** 2 * np.exp(-2 * l * x) * l ** 2) / n)) * 1.96
+
+
+def norm_distr(m, sq, x):
+    return 0.5 * (1 + erf(((x - m) / (np.sqrt(2) * sq))))
+
+
+def weib_distr(alf, beta, x):
+    return 1 - np.exp(-(x ** beta) / alf)
+
+
+def uni_distr(a, b, x):
+    return (x - a) / (b - a)
+
+
+def gammaFunc(x):
+    if x < 0.5:
+        return (np.pi) / (np.sin(np.pi * x) * gammaFunc(1 - x))
+
+    res = 1
+    while x > 1.5:
+        x -= 1
+        res *= x
+    return res * np.sqrt(2 * np.pi) * np.exp(-x + 0.5 * np.log(x) + (1 / (12 * x + (1 / (10 * x)))))
+
+
+def stat_mom(arr, k):
+    res = 0
+    for i in range(len(arr)):
+        res += arr[i] ** k
+    res = res / len(arr)
+    return res
+
+
+def centre_mom(arr, k):
+    st_m = stat_mom(arr, 1)
+
+    res = 0
+    for i in range(len(arr)):
+        res += (arr[i] - st_m) ** k
+
+    res = res / len(arr)
     return res

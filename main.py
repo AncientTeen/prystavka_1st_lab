@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 import tkinter
 from tkinter.ttk import Notebook
 
@@ -167,7 +167,7 @@ from visFuncs import *
 
 """TKINTER"""
 from tkinter import *
-from tkinter import filedialog as fd
+from tkinter import filedialog as fd, simpledialog
 import csv
 import seaborn as sns
 import numpy as np
@@ -179,25 +179,27 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 
-array = []
 l_arr = None
 s_arr = None
 anom_arr = None
+cls = None
 
 
-def donothing():
-    x = 0
+def classes():
+    global cls
+    user_input = simpledialog.askstring("Classes", "Введіть кількість класів")
+
+    if user_input != "":
+        cls = int(user_input)
+    createHist(arr)
+    create_distribution_function(arr)
 
 
 def openFile():
-    # root.filename = fd.askopenfilename(initialdir="/", title="Select file", filetypes=(('text files', '*.txt'),
-    #                                                                                    ('All files', '*.*')))
     root.filename = fd.askopenfilename(initialdir="/", title="Select file", filetypes=[('All Files', '*.*'),
                                                                                        ('Python Files', '*.py'),
                                                                                        ('Text Document', '*.txt'),
                                                                                        ('CSV files', "*.csv")])
-
-    print(root.filename.split('.')[1])
 
     global array
     if root.filename.split('.')[1] == 'txt':
@@ -223,9 +225,9 @@ def openFile():
 
         array = shellSort(array, len(array))
 
-    createHist(array)
-    create_distribution_function(array)
-    outputData(array)
+    createHist()
+    create_distribution_function()
+    outputData()
 
 
 def logarimization():
@@ -236,9 +238,9 @@ def logarimization():
         l_arr = logs(anom_arr)
     else:
         l_arr = logs(array)
-    createHist(l_arr)
-    create_distribution_function(l_arr)
-    outputData(l_arr)
+    createHist()
+    create_distribution_function()
+    outputData()
 
 
 def standartization():
@@ -252,9 +254,9 @@ def standartization():
     else:
         s_arr = standr(array)
 
-    createHist(s_arr)
-    create_distribution_function(s_arr)
-    outputData(s_arr)
+    createHist()
+    create_distribution_function()
+    outputData()
 
 
 def removeAnomal():
@@ -267,16 +269,30 @@ def removeAnomal():
     else:
         anom_arr = removeAnomalous(array)
 
-    createHist(anom_arr)
-    create_distribution_function(anom_arr)
-    outputData(anom_arr)
+    createHist()
+    create_distribution_function()
+    outputData()
 
 
-def createHist(arr, distrb=None, classes=None):
+def createHist(distrb=None, kolmogor=None, xi_val=None):
+    global arr
+    if l_arr is not None:
+        arr = l_arr
+
+    elif s_arr is not None:
+        arr = s_arr
+
+    elif anom_arr is not None:
+        arr = anom_arr
+    elif array is not None:
+        arr = array
+
+    arr = np.asarray(arr)
+
     fig, ax = plt.subplots(figsize=(5, 4), dpi=100)
 
-    if classes:
-        b = classes
+    if cls:
+        b = cls
     else:
         if len(arr) < 100:
             b = round((len(arr) ** (1 / 2)))
@@ -304,9 +320,8 @@ def createHist(arr, distrb=None, classes=None):
     #
     # elif s_arr is not None:
     #     arr = s_arr
-
-
-
+    T3 = Text(master=root, height=10, width=100)
+    T3.grid(row=13, column=0)
 
     n = len(arr)
     avr = average(arr)
@@ -325,20 +340,120 @@ def createHist(arr, distrb=None, classes=None):
 
         print(y)
 
-        plt.plot(arr, y)
+        mat_sp = 1 / lambd
+        disp = 1 / (lambd ** 2)
+        asym = 2
+        exes = 6
+        disp_lambd = (lambd ** 2) / n
+
+        T3.insert(END, 'Характеристики експоненціального розподілу:\n')
+
+        T3.insert(END, 'Мат. сподівання: \t\t\t\t\t' + str(round(mat_sp, 4)) + '\n')
+        T3.insert(END, 'Дисперсія: \t\t\t\t\t' + str(round(disp, 4)) + '\n')
+        T3.insert(END, 'Коефіцієнт асиметрії: \t\t\t\t\t' + str(round(asym, 4)) + '\n')
+        T3.insert(END, 'Коефіцієнт ексцесу: \t\t\t\t\t' + str(round(exes, 4)) + '\n')
+
+        T3.insert(END, 'Характеристика\t\t\t' + 'INF\t\t' + 'Значення\t\t' + 'SUP\t\t' + 'SKV\n')
+        T3.insert(END, '\u03BB: \t\t\t' + str(round(lambd - np.sqrt(disp_lambd), 4)) + '\t\t' + str(
+            round(lambd, 4)) + '\t\t' + str(round(lambd + np.sqrt(disp_lambd), 4)) + '\t\t' + str(
+            round(np.sqrt(disp_lambd), 4)) + '\n')
+
+        if kolmogor:
+            znach_l1 = 0
+            if n > 100:
+                znach_l1 = 0.05
+            elif n < 30:
+                znach_l1 = 0.3
+            else:
+                znach_l1 = 0.175
+
+            znach_l2 = 0
+            if n == 25:
+                znach_l2 = 11.1
+
+            elif n == 75:
+                znach_l2 = 14.1
+            elif n == 200:
+                znach_l2 = 11.1
+            elif n == 500:
+                znach_l2 = 14.1
+            else:
+                znach_l2 = 12.5
+
+            T3.insert(END, 'Критичний рівень значущості для критерію Колмогорова: ' + str(znach_l1) + '\n')
+            T3.insert(END, 'Значення ймовірності узгодження Колмогорова дорівнює: ' + str(
+                round(kolmogor, 4)) + ' , отже модель нормального розподілу адекватна' + '\n')
+            T3.insert(END, 'Критичний рівень значущості для критерію Пірсона: ' + str(znach_l2) + '\n')
+            T3.insert(END, 'Значення критерію Пірсона дорівнює: ' + str(round(xi_val, 4)) + '\n')
+
+        plt.plot(arr, y, color='red')
 
 
     elif distrb == 'Арксінуса':
         a_n = np.histogram(arr, bins=b)
-        nm = max(a_n[0]) / n
+        nm1 = min(a_n[0]) / n
 
+        nm2 = abs(max(arr, key=abs))
+        nm3 = a_n[1][1] - a_n[1][0]
         a = np.sqrt(2) * np.sqrt(avr_sq - (avr ** 2))
+        print(a)
+        a = a + abs(a - nm2) + 0.001
+        print(a)
 
         y = 1 / (np.pi * (np.sqrt(a ** 2 - arr ** 2)))
+        # y = y / nm3
+        y = y * (nm1 / min(y))
 
-        y = y * (nm / max(y))
+        # y = y * (nm1 / max(y))
+        # y = y / (np.pi * a)
 
-        plt.plot(arr, y)
+        mat_sp = 0
+        disp = (a ** 2) / 2
+        asym = 0
+        exes = -1.5
+        disp_a = (a ** 4) / (8 * n)
+
+        T3.insert(END, 'Характеристики розподілу арксінуса:\n')
+
+        T3.insert(END, 'Мат. сподівання: \t\t\t\t\t' + str(round(mat_sp, 4)) + '\n')
+        T3.insert(END, 'Дисперсія: \t\t\t\t\t' + str(disp) + '\n')
+        T3.insert(END, 'Коефіцієнт асиметрії: \t\t\t\t\t' + str(round(asym, 4)) + '\n')
+        T3.insert(END, 'Коефіцієнт ексцесу: \t\t\t\t\t' + str(round(exes, 4)) + '\n')
+
+        T3.insert(END, 'Характеристика\t\t\t' + 'INF\t\t' + 'Значення\t\t' + 'SUP\t\t' + 'SKV\n')
+        T3.insert(END, 'a: \t\t\t' + str(round(a - np.sqrt(disp_a), 4)) + '\t\t' + str(round(a, 4)) + '\t\t' + str(
+            round(a + np.sqrt(disp_a), 4)) + '\t\t' + str(round(np.sqrt(disp_a), 4)) + '\n')
+
+        if kolmogor:
+            znach_l1 = 0
+            if n > 100:
+                znach_l1 = 0.05
+            elif n < 30:
+                znach_l1 = 0.3
+            else:
+                znach_l1 = 0.175
+
+            znach_l2 = 0
+            if n == 25:
+                znach_l2 = 11.1
+
+            elif n == 75:
+                znach_l2 = 14.1
+            elif n == 200:
+                znach_l2 = 11.1
+            elif n == 500:
+                znach_l2 = 14.1
+            else:
+                znach_l2 = 12.5
+
+            T3.insert(END, 'Критичний рівень значущості для критерію Колмогорова: ' + str(znach_l1) + '\n')
+            T3.insert(END, 'Значення ймовірності узгодження Колмогорова дорівнює: ' + str(
+                round(kolmogor, 4)) + ' , отже модель розподілу арксінуса адекватна' + '\n')
+            T3.insert(END, 'Критичний рівень значущості для критерію Пірсона: ' + str(znach_l2) + '\n')
+            T3.insert(END, 'Значення критерію Пірсона дорівнює: ' + str(round(xi_val, 4)) + '\n')
+        plt.ylim(0, (max(a_n[0]) / n) * 1.5)
+
+        plt.plot(arr, y, color='red')
 
 
     elif distrb == 'Нормальний':
@@ -352,7 +467,60 @@ def createHist(arr, distrb=None, classes=None):
 
         y = y * (nm / max(y))
 
-        plt.plot(arr, y)
+        mat_sp = m
+        disp = sq ** 2
+        asym = 0
+        exes = 0
+        shift_exes = 3
+
+        disp_m = (sq ** 2) / n
+        disp_sq = (sq ** 2) / (2 * n)
+        cov = 0
+
+        T3.insert(END, 'Характеристики нормального розподілу:\n')
+
+        T3.insert(END, 'Мат. сподівання: \t\t\t\t\t' + str(round(mat_sp, 4)) + '\n')
+        T3.insert(END, 'Дисперсія: \t\t\t\t\t' + str(round(disp, 4)) + '\n')
+        T3.insert(END, 'Коефіцієнт асиметрії: \t\t\t\t\t' + str(round(asym, 4)) + '\n')
+        T3.insert(END, 'Коефіцієнт незсунений ексцесу: \t\t\t\t\t' + str(round(exes, 4)) + '\n')
+        T3.insert(END, 'Коефіцієнт зсунений ексцесу: \t\t\t\t\t' + str(round(shift_exes, 4)) + '\n')
+
+        T3.insert(END, 'Характеристика\t\t\t' + 'INF\t\t' + 'Значення\t\t' + 'SUP\t\t' + 'SKV\n')
+        T3.insert(END, 'm: \t\t\t' + str(round(m - np.sqrt(disp_m), 4)) + '\t\t' + str(round(m, 4)) + '\t\t' + str(
+            round(m + np.sqrt(disp_m), 4)) + '\t\t' + str(round(np.sqrt(disp_m), 4)) + '\n')
+        T3.insert(END,
+                  '\u03C3: \t\t\t' + str(round(sq - np.sqrt(disp_m), 4)) + '\t\t' + str(round(sq, 4)) + '\t\t' + str(
+                      round(sq + np.sqrt(disp_m), 4)) + '\t\t' + str(round(np.sqrt(disp_sq), 4)) + '\n')
+
+        if kolmogor:
+            znach_l1 = 0
+            if n > 100:
+                znach_l1 = 0.05
+            elif n < 30:
+                znach_l1 = 0.3
+            else:
+                znach_l1 = 0.175
+
+            znach_l2 = 0
+            if n == 25:
+                znach_l2 = 11.1
+
+            elif n == 75:
+                znach_l2 = 14.1
+            elif n == 200:
+                znach_l2 = 11.1
+            elif n == 500:
+                znach_l2 = 14.1
+            else:
+                znach_l2 = 12.5
+
+            T3.insert(END, 'Критичний рівень значущості для критерію Колмогорова: ' + str(znach_l1) + '\n')
+            T3.insert(END, 'Значення ймовірності узгодження Колмогорова дорівнює: ' + str(
+                round(kolmogor, 4)) + ' , отже модель нормального розподілу адекватна' + '\n')
+            T3.insert(END, 'Критичний рівень значущості для критерію Пірсона: ' + str(znach_l2) + '\n')
+            T3.insert(END, 'Значення критерію Пірсона дорівнює: ' + str(round(xi_val, 4)) + '\n')
+
+        plt.plot(arr, y, color='red')
 
 
 
@@ -401,7 +569,71 @@ def createHist(arr, distrb=None, classes=None):
 
         y = y * (nm / max(y))
 
-        plt.plot(arr, y)
+        mat_sp = alf ** (2 / beta) * gammaFunc(1 + (1 / beta))
+        disp = alf ** (2 / beta) * (gammaFunc(1 + (2 / beta)) - gammaFunc(1 + (1 / beta)) ** 2)
+
+        snd_mom = centre_mom(arr, 2)
+        trd_mom = centre_mom(arr, 3)
+        frth_mom = centre_mom(arr, 4)
+
+        asym = trd_mom / (snd_mom ** (3 / 2))
+        exes = (frth_mom / (snd_mom ** 2)) - 3
+
+        s_zal = 0
+        for i in range(n - 1):
+            s_zal += (np.log(np.log(1 / (1 - s_y[i])) - cof_matr[0] - beta * np.log(arr[i]))) ** 2
+        s_zal = s_zal / (n - 3)
+
+        disp_A = (a22 * s_zal) / (a11 * a22 - a12 * a12)
+        disp_beta = (a11 * s_zal) / (a11 * a22 - a12 * a12)
+        cov1 = -(a12 * s_zal) / (a11 * a22 - a12 * a12)
+
+        disp_alf = np.exp(-2 * cof_matr[0]) * disp_A
+        cov2 = -np.exp(cof_matr[0]) * cov1
+
+        T3.insert(END, 'Характеристики розподілу Вейбулла:\n')
+
+        T3.insert(END, 'Мат. сподівання: \t\t\t\t\t' + str(round(mat_sp, 4)) + '\n')
+        T3.insert(END, 'Дисперсія: \t\t\t\t\t' + str(round(disp, 4)) + '\n')
+        T3.insert(END, 'Коефіцієнт асиметрії: \t\t\t\t\t' + str(round(asym, 4)) + '\n')
+        T3.insert(END, 'Коефіцієнт незсунений ексцесу: \t\t\t\t\t' + str(round(exes, 4)) + '\n')
+
+        T3.insert(END, 'Характеристика\t\t\t' + 'INF\t\t' + 'Значення\t\t' + 'SUP\t\t' + 'SKV\n')
+        T3.insert(END, '\u03B1: \t\t\t' + str(round(alf - np.sqrt(disp_alf), 4)) + '\t\t' + str(
+            round(alf, 4)) + '\t\t' + str(round(alf + np.sqrt(disp_alf), 4)) + '\t\t' + str(
+            round(np.sqrt(disp_alf), 4)) + '\n')
+        T3.insert(END, '\u03B2: \t\t\t' + str(round(beta - np.sqrt(disp_beta), 4)) + '\t\t' + str(
+            round(beta, 4)) + '\t\t' + str(round(beta + np.sqrt(disp_beta), 4)) + '\t\t' + str(
+            round(np.sqrt(disp_beta), 4)) + '\n')
+
+        if kolmogor:
+            znach_l1 = 0
+            if n > 100:
+                znach_l1 = 0.05
+            elif n < 30:
+                znach_l1 = 0.3
+            else:
+                znach_l1 = 0.175
+
+            znach_l2 = 0
+            if n == 25:
+                znach_l2 = 11.1
+
+            elif n == 75:
+                znach_l2 = 14.1
+            elif n == 200:
+                znach_l2 = 11.1
+            elif n == 500:
+                znach_l2 = 14.1
+            else:
+                znach_l2 = 12.5
+
+            T3.insert(END, 'Критичний рівень значущості для критерію Колмогорова: ' + str(znach_l1) + '\n')
+            T3.insert(END, 'Значення ймовірності узгодження Колмогорова дорівнює: ' + str(
+                round(kolmogor, 4)) + ' , отже модель розподілу Вейбулла адекватна' + '\n')
+            T3.insert(END, 'Критичний рівень значущості для критерію Пірсона: ' + str(znach_l2) + '\n')
+            T3.insert(END, 'Значення критерію Пірсона дорівнює: ' + str(round(xi_val, 4)) + '\n')
+        plt.plot(arr, y, color='red')
 
 
 
@@ -410,8 +642,8 @@ def createHist(arr, distrb=None, classes=None):
         a_n = np.histogram(arr, bins=b)
         nm = sum(a_n[0]) / (n * b)
 
-        a = avr - ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
-        b = avr + ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
+        a = avr - np.sqrt(3 * (avr_sq - avr ** 2))
+        b = avr + np.sqrt(3 * (avr_sq - avr ** 2))
 
         y = [0 for i in range(n)]
 
@@ -420,11 +652,73 @@ def createHist(arr, distrb=None, classes=None):
             y[i] = 1 / (b - a)
             i += 1
         y = np.asarray(y)
-        print(y)
         y = y * (nm / max(y))
-        plt.plot(arr, y)
 
-    # elif distrb == 'Універсальний':
+        mat_sp = (a + b) / 2
+        disp = ((b - a) ** 2) / 12
+
+        asym = 0
+        exes = -1.2
+
+        dfH11 = 1 + 3 * ((a + b) / (b - a))
+        dfH12 = -(3 / (b - a))
+        dfH21 = 1 - 3 * ((a + b) / (b - a))
+        dfH22 = 3 / (b - a)
+
+        Dx = ((b - a) ** 2) / (12 * n)
+        covX_xx = ((a + b) * ((b - a) ** 2)) / (12 * n)
+        Dx_sq = ((b - a) ** 4 + 15 * (a + b) ** 2 * (b - a) ** 2) / (180 * n)
+
+        disp_a = dfH11 ** 2 * Dx + dfH12 ** 2 * Dx_sq + 2 * dfH11 * dfH12 * covX_xx
+        disp_b = dfH21 ** 2 * Dx + dfH22 ** 2 * Dx_sq + 2 * dfH21 * dfH22 * covX_xx
+        cov_a_b = dfH11 * dfH21 * Dx + dfH12 * dfH22 * Dx_sq + (dfH11 * dfH22 + dfH12 * dfH21) * covX_xx
+
+        T3.insert(END, 'Характеристики рівномірного розподілу:\n')
+
+        T3.insert(END, 'Мат. сподівання: \t\t\t\t\t' + str(round(mat_sp, 4)) + '\n')
+        T3.insert(END, 'Дисперсія: \t\t\t\t\t' + str(round(disp, 4)) + '\n')
+        T3.insert(END, 'Коефіцієнт асиметрії: \t\t\t\t\t' + str(round(asym, 4)) + '\n')
+        T3.insert(END, 'Коефіцієнт незсунений ексцесу: \t\t\t\t\t' + str(round(exes, 4)) + '\n')
+
+        T3.insert(END, 'D{a}: \t\t\t\t\t' + str(disp_a) + '\n')
+        T3.insert(END, 'D{b}: \t\t\t\t\t' + str(disp_b) + '\n')
+
+        T3.insert(END, 'a: \t\t\t' + str(round(a - np.sqrt(disp_a), 4)) + '\t\t' + str(
+            round(a, 4)) + '\t\t' + str(round(a + np.sqrt(disp_a), 4)) + '\t\t' + str(
+            round(np.sqrt(disp_a), 4)) + '\n')
+        T3.insert(END, 'b: \t\t\t' + str(round(b - np.sqrt(disp_b), 4)) + '\t\t' + str(
+            round(b, 4)) + '\t\t' + str(round(b + np.sqrt(disp_b), 4)) + '\t\t' + str(
+            round(np.sqrt(disp_b), 4)) + '\n')
+
+        if kolmogor:
+            znach_l1 = 0
+            if n > 100:
+                znach_l1 = 0.05
+            elif n < 30:
+                znach_l1 = 0.3
+            else:
+                znach_l1 = 0.175
+
+            znach_l2 = 0
+            if n == 25:
+                znach_l2 = 11.1
+
+            elif n == 75:
+                znach_l2 = 14.1
+            elif n == 200:
+                znach_l2 = 11.1
+            elif n == 500:
+                znach_l2 = 14.1
+            else:
+                znach_l2 = 12.5
+
+            T3.insert(END, 'Критичний рівень значущості для критерію Колмогорова: ' + str(znach_l1) + '\n')
+            T3.insert(END, 'Значення ймовірності узгодження Колмогорова дорівнює: ' + str(
+                round(kolmogor, 4)) + ' , отже модель рівномірного розподілу адекватна' + '\n')
+            T3.insert(END, 'Критичний рівень значущості для критерію Пірсона: ' + str(znach_l2) + '\n')
+            T3.insert(END, 'Значення критерію Пірсона дорівнює: ' + str(round(xi_val, 4)) + '\n')
+
+        plt.plot(arr, y, color='red')
 
     hist = FigureCanvasTkAgg(fig, master=root)
     hist.get_tk_widget().grid(row=0, column=0)
@@ -433,7 +727,19 @@ def createHist(arr, distrb=None, classes=None):
     toolbar.grid(row=1, column=0)
 
 
-def create_distribution_function(arr, distrb=None, classes=None):
+def create_distribution_function(distrb=None):
+    global arr
+    if l_arr is not None:
+        arr = l_arr
+
+    elif s_arr is not None:
+        arr = s_arr
+
+    elif anom_arr is not None:
+        arr = anom_arr
+    elif array is not None:
+        arr = array
+
     fig, ax = plt.subplots(figsize=(5, 4))
 
     plt.grid(color='grey', linestyle='--', linewidth=0.5)
@@ -449,8 +755,8 @@ def create_distribution_function(arr, distrb=None, classes=None):
     else:
         t = 1.96
 
-    if classes:
-        b = classes
+    if cls:
+        b = cls
     else:
         if n < 100:
             b = round((n ** (1 / 2)))
@@ -474,10 +780,19 @@ def create_distribution_function(arr, distrb=None, classes=None):
     if distrb == 'Експоненціальний':
 
         lambd = 1 / avr
+        conf_inter = 0
+        for i in range(n):
+            conf_inter += (lambd * np.exp(-lambd * arr[i])) ** 2 * (
+                    (arr[i] ** 2 * np.exp(-2 * lambd * arr[i]) * lambd ** 2) / n)
 
-        y = 1 - np.exp(-lambd * arr)
-        y_up = 1 - np.exp(-lambd * arr) + conf_inter
-        y_low = 1 - np.exp(-lambd * arr) - conf_inter
+        conf_inter = np.sqrt(conf_inter) * 1.96
+        # y = 1 - np.exp(-lambd * arr)
+        # y_up = 1 - np.exp(-lambd * arr) + conf_inter
+        # y_low = 1 - np.exp(-lambd * arr) - conf_inter
+
+        y = exp_distr(lambd, arr)
+        y_up = exp_up(lambd, arr)
+        y_low = exp_low(lambd, arr)
 
         plt.plot(arr, y, label='Теоретична функція розподілу')
         plt.plot(arr, y_up, label='Верхня межа')
@@ -488,15 +803,49 @@ def create_distribution_function(arr, distrb=None, classes=None):
 
     elif distrb == 'Арксінуса':
 
-        a = np.sqrt(2) * np.sqrt(avr_sq - avr ** 2)
+        nm2 = abs(max(arr, key=abs))
+        a = np.sqrt(2) * np.sqrt(avr_sq - (avr ** 2))
+        a = a + abs(a - nm2) + 0.001
+        disp_a = (a ** 4) / (8 * n)
 
-        y = 1 / 2 + np.arcsin((arr / a)) / np.pi
-        y_up = 1 / 2 + np.arcsin((arr / a)) / np.pi + conf_inter
-        y_low = 1 / 2 + np.arcsin((arr / a)) / np.pi - conf_inter
 
-        plt.plot(arr, y, label='Теоретична функція розподілу')
-        plt.plot(arr, y_up, label='Верхня межа')
-        plt.plot(arr, y_low, label='Нижня межа')
+
+
+        # q = np.pi * a * np.sqrt(a ** 2 - arr ** 2)
+        # dF = np.sqrt((-arr / (np.pi * a * np.sqrt(a ** 2 - arr ** 2)) ** 2) * disp_a) * 1.96
+
+        arr_a = np.clip(arr / a, -1, 1)
+        # y = (1 / 2) + np.arcsin(arr / a) / np.pi
+
+        y = (1 / 2) + np.arcsin(arr_a) / np.pi
+
+        # y_up = ((1 / 2) + np.arcsin(arr / a) / np.pi) + np.sqrt(
+        #     ((-arr) / (np.pi * a * np.sqrt(a ** 2 - arr ** 2))) ** 2 * disp_a) * 1.96
+        # y_low = ((1 / 2) + np.arcsin(arr / a) / np.pi) - np.sqrt(
+        #     ((-arr) / (np.pi * a * np.sqrt(a ** 2 - arr ** 2))) ** 2 * disp_a) * 1.96
+
+
+
+
+        confidence_level = 0.95
+        lower_quantile = (1 - confidence_level) / 2
+        upper_quantile = 1 - lower_quantile
+        lower_bound = [0 for i in range(n)]
+        upper_bound = [0 for i in range(n)]
+
+        for i in range(n):
+            lower_bound[i] = np.percentile(y[i], lower_quantile * 100)
+            upper_bound[i] = np.percentile(y[i], upper_quantile * 100)
+        print(y)
+        print(lower_bound)
+
+        plt.ylim(0, 1.1)
+
+        plt.plot(arr, y, label='Теоретична функція розподілу', color='red')
+        # plt.plot(arr, y_up, label='Верхня межа')
+        # plt.plot(arr, y_low, label='Нижня межа')
+        # plt.plot(arr, lower_bound, label='Верхня межа')
+        # plt.plot(arr, upper_bound, label='Нижня межа')
 
         plt.legend()
 
@@ -510,10 +859,24 @@ def create_distribution_function(arr, distrb=None, classes=None):
         y_up = [0 for i in range(n)]
         y_low = [0 for i in range(n)]
 
+        disp_m = (sq ** 2) / n
+        disp_sq = (sq ** 2) / (2 * n)
+        df_m = -np.exp(-(arr - m) ** 2 / (2 * sq ** 2)) / (sq * np.sqrt(2 * np.pi))
+        df_sq = (-(arr - m) * np.exp(-(arr - m) ** 2 / (2 * sq ** 2))) / (sq ** 2 * np.sqrt(2 * np.pi))
+
+        dF = (-np.exp(-(arr - m) ** 2 / (2 * sq ** 2)) / (sq * np.sqrt(2 * np.pi))) ** 2 * disp_m + (
+                (-(arr - m) * np.exp(-(arr - m) ** 2 / (2 * sq ** 2))) / (
+                sq ** 2 * np.sqrt(2 * np.pi))) ** 2 * disp_sq
+
         for i in range(n):
-            y[i] = 0.5 * (1 + erf(((arr[i] - m) / (np.sqrt(2) * sq))))
-            y_up[i] = 0.5 * (1 + erf(((arr[i] - m) / (np.sqrt(2) * sq)))) + conf_inter
-            y_low[i] = 0.5 * (1 + erf(((arr[i] - m) / (np.sqrt(2) * sq)))) - conf_inter
+            y[i] = norm_distr(m, sq, arr[i])
+            y_up[i] = norm_distr(m, sq, arr[i]) + np.sqrt(((-np.exp(-(arr[i] - m) ** 2 / (2 * sq ** 2)) / (
+                    sq * np.sqrt(2 * np.pi))) ** 2 * disp_m + ((-(arr[i] - m) * np.exp(
+                -(arr[i] - m) ** 2 / (2 * sq ** 2))) / (sq ** 2 * np.sqrt(2 * np.pi))) ** 2 * disp_sq)) * 1.96
+
+            y_low[i] = norm_distr(m, sq, arr[i]) - np.sqrt(((-np.exp(-(arr[i] - m) ** 2 / (2 * sq ** 2)) / (
+                    sq * np.sqrt(2 * np.pi))) ** 2 * disp_m + ((-(arr[i] - m) * np.exp(
+                -(arr[i] - m) ** 2 / (2 * sq ** 2))) / (sq ** 2 * np.sqrt(2 * np.pi))) ** 2 * disp_sq)) * 1.96
 
         print(y)
 
@@ -565,21 +928,62 @@ def create_distribution_function(arr, distrb=None, classes=None):
 
         beta = cof_matr[1]
 
-        y = 1 - np.exp(-(arr ** beta) / alf)
-        y_up = 1 - np.exp(-(arr ** beta) / alf) + conf_inter
-        y_low = 1 - np.exp(-(arr ** beta) / alf) - conf_inter
+        s_zal = 0
+        for i in range(n - 1):
+            s_zal += (np.log(np.log(1 / (1 - s_y[i])) - cof_matr[0] - beta * np.log(arr[i]))) ** 2
+        s_zal = s_zal / (n - 3)
+
+        disp_A = (a22 * s_zal) / (a11 * a22 - a12 * a12)
+        disp_beta = (a11 * s_zal) / (a11 * a22 - a12 * a12)
+        cov1 = -(a12 * s_zal) / (a11 * a22 - a12 * a12)
+
+        disp_alf = np.exp(-2 * cof_matr[0]) * disp_A
+        cov2 = -np.exp(cof_matr[0]) * cov1
+
+        y = weib_distr(alf, beta, arr)
+
+        # y_up = weib_distr(alf, beta, arr) + conf_inter
+        # y_low = weib_distr(alf, beta, arr) - conf_inter
+
+        # dF = (((-arr ** beta) / (alf ** 2)) * np.exp((((-arr ** beta) / alf)))) ** 2 * disp_alf + (
+        #             ((arr ** beta) / alf) * np.log(arr) * np.exp((((-arr ** beta) / alf)))) ** 2 * disp_beta + 2 * (
+        #         ((((-arr ** beta) / (alf ** 2)) * np.exp((((-arr ** beta) / alf)))) * ((arr ** beta) / alf) * np.log(arr) * np.exp((((-arr ** beta) / alf)))) * cov2)
+
+        y_up = 1 - np.exp(-(arr ** beta) / alf) + np.sqrt(
+            (((-arr ** beta) / (alf ** 2)) * np.exp((((-arr ** beta) / alf)))) ** 2 * disp_alf + (
+                    ((arr ** beta) / alf) * np.log(arr) * np.exp((((-arr ** beta) / alf)))) ** 2 * disp_beta + 2 * (
+                    ((((-arr ** beta) / (alf ** 2)) * np.exp((((-arr ** beta) / alf)))) * (
+                            (arr ** beta) / alf) * np.log(arr) * np.exp((((-arr ** beta) / alf)))) * cov2)) * 1.96
+        y_low = 1 - np.exp(-(arr ** beta) / alf) - np.sqrt(
+            (((-arr ** beta) / (alf ** 2)) * np.exp((((-arr ** beta) / alf)))) ** 2 * disp_alf + (
+                    ((arr ** beta) / alf) * np.log(arr) * np.exp((((-arr ** beta) / alf)))) ** 2 * disp_beta + 2 * (
+                    ((((-arr ** beta) / (alf ** 2)) * np.exp((((-arr ** beta) / alf)))) * (
+                            (arr ** beta) / alf) * np.log(arr) * np.exp((((-arr ** beta) / alf)))) * cov2)) * 1.96
+
         plt.plot(arr, y, label='Теоретична функція розподілу')
         plt.plot(arr, y_up, label='Верхня межа')
         plt.plot(arr, y_low, label='Нижня межа')
 
         plt.legend()
 
-        # np.log(1 / (1 - (i / len(data))))
 
     elif distrb == 'Рівномірний':
 
-        a = avr - ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
-        b = avr + ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
+        a = avr - np.sqrt(3 * (avr_sq - avr ** 2))
+        b = avr + np.sqrt(3 * (avr_sq - avr ** 2))
+
+        dfH11 = 1 + 3 * ((a + b) / (b - a))
+        dfH12 = -(3 / (b - a))
+        dfH21 = 1 - 3 * ((a + b) / (b - a))
+        dfH22 = (3 / (b - a))
+
+        Dx = ((b - a) ** 2) / (12 * n)
+        covX_xx = ((a + b) * ((b - a) ** 2)) / (12 * n)
+        Dx_sq = ((b - a) ** 4 + 15 * (a + b) ** 2 * (b - a) ** 2) / (180 * n)
+
+        disp_a = dfH11 ** 2 * Dx + dfH12 ** 2 * Dx_sq + 2 * dfH11 * dfH12 * covX_xx
+        disp_b = dfH21 ** 2 * Dx + dfH22 ** 2 * Dx_sq + 2 * dfH21 * dfH22 * covX_xx
+        cov_a_b = dfH11 * dfH21 * Dx + dfH12 * dfH22 * Dx_sq + (dfH11 * dfH22 + dfH12 * dfH21) * covX_xx
 
         y = [0 for i in range(n)]
 
@@ -587,7 +991,7 @@ def create_distribution_function(arr, distrb=None, classes=None):
 
         while i < n:
             if arr[i] >= a and arr[i] < b:
-                y[i] = (arr[i] - a) / (b - a)
+                y[i] = uni_distr(a, b, arr[i])
             elif arr[i] >= b:
                 y[i] = 1
             i += 1
@@ -595,8 +999,12 @@ def create_distribution_function(arr, distrb=None, classes=None):
         y_up = [0 for j in range(n)]
         y_low = [0 for j in range(n)]
         for k in range(n):
-            y_up[k] = y[k] + conf_inter
-            y_low[k] = y[k] - conf_inter
+            y_up[k] = y[k] + np.sqrt(
+                ((arr[k] - b) ** 2 / ((b - a) ** 4)) * disp_a + ((arr[k] - a) ** 2 / ((b - a) ** 4)) * disp_b - 2 * (
+                        ((arr[k] - a) * (arr[k] - b)) / ((b - a) ** 4)) * cov_a_b) * 1.96
+            y_low[k] = y[k] - np.sqrt(
+                ((arr[k] - b) ** 2 / ((b - a) ** 4)) * disp_a + ((arr[k] - a) ** 2 / ((b - a) ** 4)) * disp_b - 2 * (
+                        ((arr[k] - a) * (arr[k] - b)) / ((b - a) ** 4)) * cov_a_b) * 1.96
         plt.plot(arr, y, label='Теоретична функція розподілу')
         plt.plot(arr, y_up, label='Верхня межа')
         plt.plot(arr, y_low, label='Нижня межа')
@@ -613,7 +1021,7 @@ def create_distribution_function(arr, distrb=None, classes=None):
     toolbar.grid(row=1, column=2, columnspan=2)
 
 
-def outputData(arr):
+def outputData():
     tabControl = Notebook(root)
 
     tab1 = Frame(tabControl)
@@ -717,47 +1125,49 @@ def outputData(arr):
 
 
 def norm():
-    createHist(array, "Нормальний")
-    create_distribution_function(array, "Нормальний")
+    createHist("Нормальний")
+    create_distribution_function("Нормальний")
 
 
 def exp():
-    createHist(array, "Експоненціальний")
-    create_distribution_function(array, "Експоненціальний")
+    createHist("Експоненціальний")
+    create_distribution_function("Експоненціальний")
 
 
 def ravn():
-    createHist(array, "Рівномірний")
-    create_distribution_function(array, "Рівномірний")
+    createHist("Рівномірний")
+    create_distribution_function("Рівномірний")
 
 
 def veib():
-    createHist(array, "Вейбула")
-    create_distribution_function(array, "Вейбула")
+    createHist("Вейбула")
+    create_distribution_function("Вейбула")
 
 
 def arcsin():
-    createHist(array, "Арксінуса")
-    create_distribution_function(array, "Арксінуса")
+    createHist("Арксінуса")
+    create_distribution_function("Арксінуса")
 
 
 def univers():
-    n = len(array)
+    n = len(arr)
     if n < 100:
         b = round((n ** (1 / 2)))
     else:
         b = round((n ** (1 / 3)))
 
-    avr = average(array)
-    avr_sq = average_sq(array)
+    avr = average(arr)
+    avr_sq = average_sq(arr)
     conf_inter = 1.36 / np.sqrt(n)
-    a_n = np.histogram(array, bins=b)
+    a_n = np.histogram(arr, bins=b)
     nm = max(a_n[0]) / n
     s_y = np.arange(1, n + 1) / n
 
     """exponential distribution check"""
+    arr_exp = np.asarray(arr)
+
     lambd = 1 / avr
-    y = 1 - np.exp(-lambd * array)
+    y = 1 - np.exp(-lambd * arr_exp)
 
     dPlus = 0
     for i in range(n):
@@ -775,9 +1185,10 @@ def univers():
 
     """arcsine distribution check"""
 
-    a = np.sqrt(2) * np.sqrt(avr_sq - avr ** 2)
+    arr_max = arr[0]
+    arr_min = arr[-1]
 
-    y = 1 / 2 + np.arcsin((array / a)) / np.pi
+    y = -(2 * np.arcsin(np.sqrt((arr - arr_min) / (arr_max - arr_min)))) / np.pi + 1
 
     dPlus = 0
     for i in range(n):
@@ -897,7 +1308,6 @@ def univers():
 
     pZet_weib = 1 - K_zet(zet, n)
 
-
     print(pZet_weib, ' weib')
     print(pZet_arc, ' arc')
     print(pZet_norm, ' norm')
@@ -906,27 +1316,152 @@ def univers():
 
     max_distr = max(pZet_weib, pZet_arc, pZet_norm, pZet_uni, pZet_exp)
 
+    xi_pirs = pirson()
+
     if max_distr == pZet_weib:
-        createHist(array, "Вейбула")
-        create_distribution_function(array, "Вейбула")
+        createHist("Вейбула", pZet_weib, xi_pirs[4])
+        create_distribution_function("Вейбула")
 
     elif max_distr == pZet_arc:
-        createHist(array, "Арксінуса")
-        create_distribution_function(array, "Арксінуса")
+        createHist("Арксінуса", pZet_arc, xi_pirs[1])
+        create_distribution_function("Арксінуса")
 
     elif max_distr == pZet_norm:
-        createHist(array, "Нормальний")
-        create_distribution_function(array, "Нормальний")
+        createHist("Нормальний", pZet_norm, xi_pirs[3])
+        create_distribution_function("Нормальний")
 
     elif max_distr == pZet_uni:
-        createHist(array, "Рівномірний")
-        create_distribution_function(array, "Рівномірний")
+        createHist("Рівномірний", pZet_uni, xi_pirs[0])
+        create_distribution_function("Рівномірний")
 
     elif max_distr == pZet_exp:
-        createHist(array, "Експоненціальний")
-        create_distribution_function(array, "Експоненціальний")
+        createHist("Експоненціальний", pZet_exp, xi_pirs[2])
+        create_distribution_function("Експоненціальний")
 
 
+def pirson():
+    n = len(arr)
+    if n < 100:
+        b = round((n ** (1 / 2)))
+    else:
+        b = round((n ** (1 / 3)))
+
+    hst = np.histogram(arr, bins=b)
+
+    avr = average(arr)
+    avr_sq = average_sq(arr)
+    s_y = np.arange(1, n + 1) / n
+
+    """exponential distribution check"""
+    lambd = 1 / avr
+    # y = 1 - np.exp(-lambd * array)
+
+    xi_exp = 0
+
+    for i in range(b):
+        xi_exp += ((((hst[0][i] - n * (
+                exp_distr(lambd, hst[1][i + 1]) - exp_distr(lambd, hst[1][i])))) ** 2) / (n * (
+                exp_distr(lambd, hst[1][i + 1]) - exp_distr(lambd, hst[1][i]))))
+
+    """arcsine distribution check"""
+
+    arr_max = hst[1][0]
+    arr_min = hst[1][-1]
+
+    xi_arc = 0
+
+    for i in range(b):
+        #
+        xi_arc += (((hst[0][i] - n * (
+                (-(2 * np.arcsin(np.sqrt((hst[1][i + 1] - arr_min) / (arr_max - arr_min)))) / np.pi + 1) - (
+                -(2 * np.arcsin(np.sqrt((hst[1][i] - arr_min) / (arr_max - arr_min)))) / np.pi + 1))) ** 2) /
+                   (n * ((-(2 * np.arcsin(np.sqrt((hst[1][i + 1] - arr_min) / (arr_max - arr_min)))) / np.pi + 1) - (
+                           -(2 * np.arcsin(np.sqrt((hst[1][i] - arr_min) / (arr_max - arr_min)))) / np.pi + 1))))
+
+    """normal distribution check"""
+    m = avr
+    sq = (n / (n - 1)) * (np.sqrt(avr_sq - avr ** 2))
+    xi_norm = 0
+
+    for i in range(b):
+        # xi_norm += (((hst[0][i] - n * (
+        #     ((0.5 * (1 + erf(((teor[1][i + 1] - m) / (np.sqrt(2) * sq))))) - (
+        #             0.5 * (1 + erf((teor[1][i] - m) / (np.sqrt(2) * sq))))))) ** 2) / (n * (
+        #     ((0.5 * (1 + erf(((teor[1][i + 1] - m) / (np.sqrt(2) * sq))))) - (
+        #             0.5 * (1 + erf((teor[1][i] - m) / (np.sqrt(2) * sq))))))))
+        xi_norm += (((hst[0][i] - n * (norm_distr(m, sq, hst[1][i + 1]) - (norm_distr(m, sq, hst[1][i])))) ** 2) /
+                    (n * (norm_distr(m, sq, hst[1][i + 1]) - (norm_distr(m, sq, hst[1][i])))))
+
+    """uniform distribution check"""
+    a = avr - ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
+    b_d = avr + ((3 * (avr_sq - avr ** 2)) ** (1 / 2))
+
+    xi_uni = 0
+
+    # while i < n:
+    #     if array[i] >= a and array[i] < b:
+    #         y[i] = (array[i] - a) / (b - a)
+    #     elif array[i] >= b:
+    #         y[i] = 1
+    #     i += 1
+
+    for i in range(b):
+        xi_uni += (((hst[0][i] - n * (uni_distr(a, b_d, hst[1][i + 1]) - uni_distr(a, b_d, hst[1][i]))) ** 2) /
+                   (n * (uni_distr(a, b_d, hst[1][i + 1]) - uni_distr(a, b_d, hst[1][i]))))
+
+    """weibull distribution check"""
+    a11 = n - 1
+
+    a12 = 0
+
+    for i in range(n - 1):
+        a12 += np.log(array[i])
+
+    a22 = 0
+
+    for i in range(n - 1):
+        a22 += np.log(array[i]) ** 2
+
+    b1 = 0
+
+    for i in range(n - 1):
+        b1 += np.log(np.log(1 / (1 - s_y[i])))
+
+    b2 = 0
+
+    for i in range(n - 1):
+        b2 += np.log(array[i]) * np.log(np.log(1 / (1 - s_y[i])))
+
+    a_matr = [[a11, a12],
+
+              [a12, a22]]
+
+    b_matr = [b1, b2]
+
+    a_matr_inv = funcReversMatr(a_matr, 2)
+
+    cof_matr = np.dot(a_matr_inv, b_matr)
+
+    alf = np.exp(-cof_matr[0])
+
+    beta = cof_matr[1]
+
+    # y = 1 - np.exp(-(array ** beta) / alf)
+
+    xi_weib = 0
+
+    for i in range(b):
+        xi_weib += (((hst[0][i] - n * (weib_distr(alf, beta, hst[1][i + 1]) - weib_distr(alf, beta, hst[1][i]))) ** 2) /
+                    (n * (weib_distr(alf, beta, hst[1][i + 1]) - weib_distr(alf, beta, hst[1][i]))))
+
+    print(xi_uni, 'uni')
+    print(xi_arc, 'arc')
+    print(xi_exp, 'exp')
+    print(xi_norm, 'norm')
+    print(xi_weib, 'weib')
+
+    xi_mass = [xi_uni, xi_arc, xi_exp, xi_norm, xi_weib]
+    return xi_mass
 
 
 root = Tk()
@@ -939,6 +1474,7 @@ label.grid(row=0, column=0)
 menubar = Menu(root)
 filemenu = Menu(menubar, tearoff=0)
 filemenu.add_command(label="Відкрити файл", command=openFile)
+filemenu.add_command(label="Класи", command=classes)
 
 transformation_menu = Menu(menubar, tearoff=0)
 transformation_menu.add_command(label="Логарифмувати", command=logarimization)
